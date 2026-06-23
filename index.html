@@ -22,6 +22,17 @@
     }
     h1 { font-size: 28px; margin-bottom: 12px; font-weight: 700; }
     p { color: #9ca3af; line-height: 1.6; margin-bottom: 24px; }
+    .notice {
+      background: #181c22;
+      border: 1px solid #f5a623;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      color: #f5e0a9;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.6;
+    }
     .steps {
       text-align: left;
       background: #181c22;
@@ -31,7 +42,8 @@
       margin-bottom: 24px;
     }
     .steps ol { padding-left: 20px; color: #c4c7d0; }
-    .steps li { margin-bottom: 10px; line-height: 1.5; }
+    .steps li { margin-bottom: 14px; line-height: 1.5; }
+    .steps strong { color: #e2e2e6; }
     .video {
       background: #181c22;
       border: 1px solid #2d3139;
@@ -86,17 +98,20 @@
     <h1>HungerStation Fraud Detection</h1>
     <p>Install the signed browser extension and run the policy helper to keep it enabled.</p>
 
+    <div class="notice">
+      <strong>Important:</strong> You <em>must</em> fully restart Chrome after running the policy helper. Close every Chrome window, end any remaining <code>chrome.exe</code> processes in Task Manager, then re-open Chrome. Otherwise Chrome will keep disabling the extension.
+    </div>
+
     <div class="steps">
       <ol>
-        <li>Download and run <strong>install-policy.bat</strong> (double-click). This tells Chrome to allow the extension.</li>
-        <li>Download <strong>extension.crx</strong> and drag it onto <code>chrome://extensions</code> with Developer mode on.</li>
-        <li>The extension will now stay enabled and auto-update silently.</li>
+        <li>Download and run <strong>install-policy.bat</strong> as Administrator (right-click → Run as administrator). This tells Chrome to allow the extension.</li>
+        <li><strong>Fully restart Chrome.</strong> The extension may auto-install after the restart. If it does not, continue to step 3.</li>
+        <li>Download <strong>extension.crx</strong>, go to <code>chrome://extensions</code> with Developer mode on, and drag the file onto the page.</li>
       </ol>
     </div>
 
     <div class="video">
       <h2>Installation Video</h2>
-      <!-- Replace the source below with your actual video file (e.g., install.mp4) -->
       <video controls poster="">
         <source src="install.mp4" type="video/mp4">
         <div class="video-placeholder">Video coming soon — replace install.mp4 in this repository.</div>
