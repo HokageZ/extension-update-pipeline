@@ -17,7 +17,7 @@
       padding: 24px;
     }
     .wrap {
-      max-width: 640px;
+      max-width: 720px;
       text-align: center;
     }
     h1 { font-size: 28px; margin-bottom: 12px; font-weight: 700; }
@@ -32,6 +32,36 @@
     }
     .steps ol { padding-left: 20px; color: #c4c7d0; }
     .steps li { margin-bottom: 10px; line-height: 1.5; }
+    .video {
+      background: #181c22;
+      border: 1px solid #2d3139;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .video h2 {
+      font-size: 16px;
+      color: #e2e2e6;
+      margin-bottom: 14px;
+      font-weight: 600;
+    }
+    video {
+      width: 100%;
+      max-height: 400px;
+      border-radius: 8px;
+      background: #0a0e14;
+    }
+    .video-placeholder {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #0a0e14;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b7080;
+      font-size: 14px;
+    }
     .links { display: flex; flex-direction: column; gap: 12px; }
     a {
       color: #0f1115;
@@ -62,6 +92,15 @@
         <li>Download <strong>extension.crx</strong> and drag it onto <code>chrome://extensions</code> with Developer mode on.</li>
         <li>The extension will now stay enabled and auto-update silently.</li>
       </ol>
+    </div>
+
+    <div class="video">
+      <h2>Installation Video</h2>
+      <!-- Replace the source below with your actual video file (e.g., install.mp4) -->
+      <video controls poster="">
+        <source src="install.mp4" type="video/mp4">
+        <div class="video-placeholder">Video coming soon — replace install.mp4 in this repository.</div>
+      </video>
     </div>
 
     <div class="links">
