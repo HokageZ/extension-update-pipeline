@@ -22,25 +22,51 @@
     }
     h1 { font-size: 28px; margin-bottom: 12px; font-weight: 700; }
     p { color: #9ca3af; line-height: 1.6; margin-bottom: 24px; }
+    .steps {
+      text-align: left;
+      background: #181c22;
+      border: 1px solid #2d3139;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    .steps ol { padding-left: 20px; color: #c4c7d0; }
+    .steps li { margin-bottom: 10px; line-height: 1.5; }
     .links { display: flex; flex-direction: column; gap: 12px; }
     a {
-      color: #a8c7fa;
+      color: #0f1115;
+      background: #a8c7fa;
       text-decoration: none;
-      padding: 12px 16px;
-      border: 1px solid #2d3139;
+      padding: 14px 18px;
       border-radius: 8px;
+      font-weight: 600;
       transition: background 0.2s;
     }
-    a:hover { background: #1a1d23; }
+    a:hover { background: #d2e3fc; }
+    a.secondary {
+      background: transparent;
+      color: #a8c7fa;
+      border: 1px solid #a8c7fa;
+    }
+    a.secondary:hover { background: rgba(168, 199, 250, 0.08); }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Extension Update Pipeline</h1>
-    <p>This site hosts signed browser extension updates. There is nothing to install from this page.</p>
+    <h1>HungerStation Fraud Detection</h1>
+    <p>Install the signed browser extension and run the policy helper to keep it enabled.</p>
+
+    <div class="steps">
+      <ol>
+        <li>Download and run <strong>install-policy.bat</strong> (double-click). This tells Chrome to allow the extension.</li>
+        <li>Download <strong>extension.crx</strong> and drag it onto <code>chrome://extensions</code> with Developer mode on.</li>
+        <li>The extension will now stay enabled and auto-update silently.</li>
+      </ol>
+    </div>
+
     <div class="links">
-      <a href="update.xml">Update Manifest (update.xml)</a>
-      <a href="extension.crx">Signed Extension Package (extension.crx)</a>
+      <a href="install-policy.bat" download>Download install-policy.bat</a>
+      <a href="extension.crx" download class="secondary">Download extension.crx</a>
     </div>
   </div>
 </body>
