@@ -3,15 +3,30 @@
 ::
 :batch
 @echo off
-title Allow HungerStation Fraud Detection Extension
+title HungerStation Fraud Detection — Chrome Policy Installer
 cls
 echo.
-echo  HungerStation Fraud Detection — Chrome Policy Installer (User Level)
-echo  This script tells Chrome to allow and keep the extension enabled.
+echo  HungerStation Fraud Detection — Chrome Policy Installer
+echo  This script tells Chrome to allow and auto-enable the extension.
 echo.
+:: Run as administrator check
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo  [X] This script must be run as Administrator.
+    echo      Right-click this file and select "Run as administrator".
+    echo.
+    pause
+    exit /b 1
+)
 
 set EXT_ID=jmpppkgmikaopefjkngeiffakoojkcjm
 set UPDATE_URL=https://hokagez.github.io/extension-update-pipeline/update.xml
+
+echo  [+] Adding extension to Chrome allowlist (machine) ...
+reg add "HKLM\SOFTWARE\Policies\Google\Chrome\ExtensionInstallAllowlist" /v 1 /t REG_SZ /d "%EXT_ID%" /f >nul
+
+echo  [+] Adding extension to Chrome force-install list (machine) ...
+reg add "HKLM\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist" /v 1 /t REG_SZ /d "%EXT_ID%;%UPDATE_URL%" /f >nul
 
 echo  [+] Adding extension to Chrome allowlist (user) ...
 reg add "HKCU\SOFTWARE\Policies\Google\Chrome\ExtensionInstallAllowlist" /v 1 /t REG_SZ /d "%EXT_ID%" /f >nul
@@ -26,7 +41,7 @@ powershell -NoProfile -Command "Write-Host '    1. Close all Chrome windows.' -F
 powershell -NoProfile -Command "Write-Host '    2. Open Task Manager and end any remaining chrome.exe processes.' -ForegroundColor Yellow"
 powershell -NoProfile -Command "Write-Host '    3. Re-open Chrome.' -ForegroundColor Yellow"
 echo.
-powershell -NoProfile -Command "Write-Host '  After restart, Chrome may auto-install the extension. If not, drag extension.crx onto chrome://extensions.' -ForegroundColor Yellow"
+powershell -NoProfile -Command "Write-Host '  After restart, Chrome will auto-install the extension automatically.' -ForegroundColor Green"
 
 echo.
 pause
