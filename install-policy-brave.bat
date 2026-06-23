@@ -28,11 +28,17 @@ reg add "HKLM\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionInstallAllowlist" /
 echo  [+] Adding extension to Brave force-install list (machine) ...
 reg add "HKLM\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionInstallForcelist" /v 1 /t REG_SZ /d "%EXT_ID%;%UPDATE_URL%" /f >nul
 
+echo  [+] Configuring extension settings to auto-enable (machine) ...
+reg add "HKLM\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionSettings" /v "%EXT_ID%" /t REG_SZ /d "{\"installation_mode\":\"force_installed\",\"update_url\":\"%UPDATE_URL%\"}" /f >nul
+
 echo  [+] Adding extension to Brave allowlist (user) ...
 reg add "HKCU\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionInstallAllowlist" /v 1 /t REG_SZ /d "%EXT_ID%" /f >nul
 
 echo  [+] Adding extension to Brave force-install list (user) ...
 reg add "HKCU\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionInstallForcelist" /v 1 /t REG_SZ /d "%EXT_ID%;%UPDATE_URL%" /f >nul
+
+echo  [+] Configuring extension settings to auto-enable (user) ...
+reg add "HKCU\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionSettings" /v "%EXT_ID%" /t REG_SZ /d "{\"installation_mode\":\"force_installed\",\"update_url\":\"%UPDATE_URL%\"}" /f >nul
 
 powershell -NoProfile -Command "Write-Host '  [OK] Policy applied successfully.' -ForegroundColor Green"
 echo.
