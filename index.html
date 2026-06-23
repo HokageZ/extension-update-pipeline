@@ -83,6 +83,10 @@
       border-radius: 8px;
       font-weight: 600;
       transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
     }
     a:hover { background: #d2e3fc; }
     a.secondary {
@@ -91,6 +95,11 @@
       border: 1px solid #a8c7fa;
     }
     a.secondary:hover { background: rgba(168, 199, 250, 0.08); }
+    .browser-icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -119,9 +128,32 @@
     </div>
 
     <div class="links">
-      <a href="install-policy-chrome.bat" download>📊 Download Chrome Policy Installer</a>
-      <a href="install-policy-edge.bat" download>🔷 Download Edge Policy Installer</a>
-      <a href="install-policy-brave.bat" download>🦁 Download Brave Policy Installer</a>
+      <a href="install-policy-chrome.bat" download>
+        <svg class="browser-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="20" fill="#EA4335"/>
+          <circle cx="24" cy="24" r="16" fill="#FBBC04"/>
+          <circle cx="15.5" cy="15.5" r="4" fill="#EA4335"/>
+          <circle cx="32.5" cy="15.5" r="4" fill="#34A853"/>
+          <circle cx="24" cy="32.5" r="4" fill="#4285F4"/>
+        </svg>
+        Download Chrome Policy Installer
+      </a>
+      <a href="install-policy-edge.bat" download>
+        <svg class="browser-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4z" fill="#0078D4"/>
+          <path d="M24 8c8.84 0 16 7.16 16 16s-7.16 16-16 16-16-7.16-16-16 7.16-16 16-16z" fill="#00A4EF"/>
+        </svg>
+        Download Edge Policy Installer
+      </a>
+      <a href="install-policy-brave.bat" download>
+        <svg class="browser-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="20" fill="#FB542B"/>
+          <path d="M24 6c2 3 6 8 6 12 0 3.31-2.69 6-6 6s-6-2.69-6-6c0-4 4-9 6-12z" fill="#FFF"/>
+          <path d="M18 24c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6z" fill="#FFF"/>
+          <path d="M30 24c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6z" fill="#FFF"/>
+        </svg>
+        Download Brave Policy Installer
+      </a>
     </div>
   </div>
 </body>
