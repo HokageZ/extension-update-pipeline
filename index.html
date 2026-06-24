@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -43,6 +43,7 @@
     }
     .steps ol { padding-left: 20px; color: #c4c7d0; }
     .steps li { margin-bottom: 14px; line-height: 1.5; }
+    .steps li:last-child { margin-bottom: 0; }
     .steps strong { color: #e2e2e6; }
     .steps code {
       background: #0a0e14;
@@ -109,7 +110,7 @@
 <body>
   <div class="wrap">
     <h1>HungerStation Fraud Detection</h1>
-    <p>One-click installer for the unpacked extension. Downloads the latest build, registers the auto-updater, and opens your default browser ready to load the extension.</p>
+    <p>One-click installer for the unpacked extension. Downloads the latest build, registers the auto-updater, and opens your browser ready to load the extension.</p>
 
     <div class="notice">
       <strong>Why unpacked?</strong> Modern Chrome, Edge, and Brave disable off-store extensions installed via enterprise policy on personal (non-domain-joined) computers. Loading the extension unpacked avoids this restriction while the built-in updater keeps it current.
@@ -118,9 +119,10 @@
     <div class="steps">
       <ol>
         <li>Click the <strong>Download install.bat</strong> button below.</li>
-        <li>Right-click the downloaded file and choose <strong>Run as administrator</strong>.</li>
-        <li>The installer will detect your default browser, download the latest extension, register the updater, copy the extension path to your clipboard, and open the browser.</li>
-        <li>In the browser window that opens, enable <strong>Developer mode</strong>, click <strong>Load unpacked</strong>, press <code>Ctrl+V</code>, then click <strong>Select Folder</strong>.</li>
+        <li>Double-click the downloaded file to run it. No administrator rights are needed.</li>
+        <li>The installer lists your installed browsers and highlights the default one. Pick the browser you use for HungerStation work.</li>
+        <li>The installer downloads the latest extension, registers the auto-updater, copies the extension path to your clipboard, and opens two browser tabs.</li>
+        <li>In the Extensions tab, enable <strong>Developer mode</strong>, click <strong>Load unpacked</strong>, press <code>Ctrl+V</code>, then click <strong>Select Folder</strong>.</li>
         <li>Done! The extension will now check for updates and prompt you to install them from the <strong>Help &amp; Updates</strong> tab.</li>
       </ol>
     </div>
@@ -141,6 +143,14 @@
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
         Download install.bat
+      </a>
+      <a href="instructions.html" class="secondary">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        View setup instructions
       </a>
       <a href="extension.zip" download class="secondary">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
