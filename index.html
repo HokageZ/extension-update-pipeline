@@ -109,7 +109,7 @@
 <body>
   <div class="wrap">
     <h1>HungerStation Fraud Detection</h1>
-    <p>Install the extension as an unpacked extension. Updates are handled automatically from inside the extension once the updater helper is installed.</p>
+    <p>One-click installer for the unpacked extension. Downloads the latest build, registers the auto-updater, and opens your default browser ready to load the extension.</p>
 
     <div class="notice">
       <strong>Why unpacked?</strong> Modern Chrome, Edge, and Brave disable off-store extensions installed via enterprise policy on personal (non-domain-joined) computers. Loading the extension unpacked avoids this restriction while the built-in updater keeps it current.
@@ -117,12 +117,11 @@
 
     <div class="steps">
       <ol>
-        <li>Download the latest <strong>extension.zip</strong> below and extract it to a folder on your computer (for example, <code>C:\Users\You\fd-extension</code>).</li>
-        <li>Open <code>chrome://extensions</code> (or <code>edge://extensions</code> / <code>brave://extensions</code>).</li>
-        <li>Enable <strong>Developer mode</strong> using the toggle in the top-right corner.</li>
-        <li>Click <strong>Load unpacked</strong> and select the extracted <code>extension</code> folder.</li>
-        <li>Download and run <strong>install-updater.bat</strong> as Administrator. This registers the helper that the extension uses to download and install future updates.</li>
-        <li>Open the extension dashboard, go to the <strong>Help &amp; Updates</strong> tab, and click <strong>Check for Updates</strong> to verify everything works.</li>
+        <li>Click the <strong>Download install.bat</strong> button below.</li>
+        <li>Right-click the downloaded file and choose <strong>Run as administrator</strong>.</li>
+        <li>The installer will detect your default browser, download the latest extension, register the updater, copy the extension path to your clipboard, and open the browser.</li>
+        <li>In the browser window that opens, enable <strong>Developer mode</strong>, click <strong>Load unpacked</strong>, press <code>Ctrl+V</code>, then click <strong>Select Folder</strong>.</li>
+        <li>Done! The extension will now check for updates and prompt you to install them from the <strong>Help &amp; Updates</strong> tab.</li>
       </ol>
     </div>
 
@@ -135,21 +134,21 @@
     </div>
 
     <div class="links">
-      <a href="https://github.com/HokageZ/hungerstation-fraud-detection/releases/latest/download/extension.zip">
+      <a href="https://raw.githubusercontent.com/HokageZ/hungerstation-fraud-detection/master/install.bat" download>
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
-        Download extension.zip
+        Download install.bat
       </a>
-      <a href="https://raw.githubusercontent.com/HokageZ/hungerstation-fraud-detection/master/install-updater.bat" download class="secondary">
+      <a href="https://github.com/HokageZ/hungerstation-fraud-detection/releases/latest/download/extension.zip" class="secondary">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
-        Download install-updater.bat
+        Download extension.zip (manual)
       </a>
     </div>
 
