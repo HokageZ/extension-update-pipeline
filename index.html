@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Extension Update Pipeline</title>
+  <title>HungerStation Fraud Detection — Install</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -44,6 +44,13 @@
     .steps ol { padding-left: 20px; color: #c4c7d0; }
     .steps li { margin-bottom: 14px; line-height: 1.5; }
     .steps strong { color: #e2e2e6; }
+    .steps code {
+      background: #0a0e14;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #a8c7fa;
+    }
     .video {
       background: #181c22;
       border: 1px solid #2d3139;
@@ -95,27 +102,27 @@
       border: 1px solid #a8c7fa;
     }
     a.secondary:hover { background: rgba(168, 199, 250, 0.08); }
-    .browser-icon {
-      width: 24px;
-      height: 24px;
-      flex-shrink: 0;
-    }
+    .icon { width: 24px; height: 24px; flex-shrink: 0; }
+    .muted { color: #9ca3af; font-size: 12px; margin-top: 16px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>HungerStation Fraud Detection</h1>
-    <p>Download the policy installer for your browser and run it to auto-install and enable the extension.</p>
+    <p>Install the extension as an unpacked extension. Updates are handled automatically from inside the extension once the updater helper is installed.</p>
 
     <div class="notice">
-      <strong>Important:</strong> You <em>must</em> fully restart your browser after running the policy helper. Close every browser window, end any remaining processes in Task Manager (e.g., <code>chrome.exe</code>, <code>msedge.exe</code>, <code>brave.exe</code>), then re-open the browser. Otherwise the extension will be automatically disabled.
+      <strong>Why unpacked?</strong> Modern Chrome, Edge, and Brave disable off-store extensions installed via enterprise policy on personal (non-domain-joined) computers. Loading the extension unpacked avoids this restriction while the built-in updater keeps it current.
     </div>
 
     <div class="steps">
       <ol>
-        <li>Choose the policy installer for your browser (Chrome, Edge, or Brave).</li>
-        <li>Download and run the <strong>.bat file</strong> as Administrator (right-click → Run as administrator). This tells your browser to allow and auto-enable the extension.</li>
-        <li><strong>Fully restart your browser.</strong> The extension will auto-install and enable automatically after restart.</li>
+        <li>Download the latest <strong>extension.zip</strong> below and extract it to a folder on your computer (for example, <code>C:\Users\You\fd-extension</code>).</li>
+        <li>Open <code>chrome://extensions</code> (or <code>edge://extensions</code> / <code>brave://extensions</code>).</li>
+        <li>Enable <strong>Developer mode</strong> using the toggle in the top-right corner.</li>
+        <li>Click <strong>Load unpacked</strong> and select the extracted <code>extension</code> folder.</li>
+        <li>Download and run <strong>install-updater.bat</strong> as Administrator. This registers the helper that the extension uses to download and install future updates.</li>
+        <li>Open the extension dashboard, go to the <strong>Help &amp; Updates</strong> tab, and click <strong>Check for Updates</strong> to verify everything works.</li>
       </ol>
     </div>
 
@@ -128,33 +135,25 @@
     </div>
 
     <div class="links">
-      <a href="install-policy-chrome.bat" download>
-        <svg class="browser-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="24" cy="24" r="20" fill="#EA4335"/>
-          <circle cx="24" cy="24" r="16" fill="#FBBC04"/>
-          <circle cx="15.5" cy="15.5" r="4" fill="#EA4335"/>
-          <circle cx="32.5" cy="15.5" r="4" fill="#34A853"/>
-          <circle cx="24" cy="32.5" r="4" fill="#4285F4"/>
+      <a href="https://github.com/HokageZ/hungerstation-fraud-detection/releases/latest/download/extension.zip">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
-        Download Chrome Policy Installer
+        Download extension.zip
       </a>
-      <a href="install-policy-edge.bat" download>
-        <svg class="browser-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-          <path d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4z" fill="#0078D4"/>
-          <path d="M24 8c8.84 0 16 7.16 16 16s-7.16 16-16 16-16-7.16-16-16 7.16-16 16-16z" fill="#00A4EF"/>
+      <a href="https://raw.githubusercontent.com/HokageZ/hungerstation-fraud-detection/master/install-updater.bat" download class="secondary">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
-        Download Edge Policy Installer
-      </a>
-      <a href="install-policy-brave.bat" download>
-        <svg class="browser-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="24" cy="24" r="20" fill="#FB542B"/>
-          <path d="M24 6c2 3 6 8 6 12 0 3.31-2.69 6-6 6s-6-2.69-6-6c0-4 4-9 6-12z" fill="#FFF"/>
-          <path d="M18 24c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6z" fill="#FFF"/>
-          <path d="M30 24c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6z" fill="#FFF"/>
-        </svg>
-        Download Brave Policy Installer
+        Download install-updater.bat
       </a>
     </div>
+
+    <p class="muted">After setup, the extension checks for updates automatically and prompts you to install them from the Help &amp; Updates tab.</p>
   </div>
 </body>
 </html>
