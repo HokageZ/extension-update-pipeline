@@ -138,7 +138,7 @@ if "%BROWSER_NAME%"=="chrome" (
 )
 
 REM Wait a moment for browser to open
-timeout /t 3 /nobreak > NUL
+ping -n 4 127.0.0.1 > NUL
 
 REM Show final instructions
 echo.
