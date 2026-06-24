@@ -1,6 +1,17 @@
 @echo off
 setlocal EnableDelayedExpansion
 
+REM ============================================================
+REM HungerStation Fraud Detection - One-Click Installer
+REM ============================================================
+
+REM Catch any unexpected exit and pause so the user can read the error.
+if not defined FD_INSTALLER_PAUSE (
+    set "FD_INSTALLER_PAUSE=1"
+    cmd /k "%~f0" %*
+    exit /b
+)
+
 echo ============================================================
 echo   HungerStation Fraud Detection - One-Click Installer
 echo ============================================================
@@ -20,28 +31,35 @@ if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 
 REM Detect default browser from registry
 echo Detecting your default browser...
+set "BROWSER_CMD="
 for /f "tokens=2*" %%a in ('reg query "HKCR\http\shell\open\command" /ve 2^>nul ^| findstr /C:"REG_SZ"') do set "BROWSER_CMD=%%b"
 
 if not defined BROWSER_CMD (
     echo Could not detect default browser. Falling back to Chrome.
     set "BROWSER_CMD=chrome"
-)
-
-REM Extract executable name for detection
-set "BROWSER_LOWER=%BROWSER_CMD%"
-set "BROWSER_LOWER=%BROWSER_LOWER:\=/%"
-set "BROWSER_LOWER=%BROWSER_LOWER:chrome.exe=chrome%"
-set "BROWSER_LOWER=%BROWSER_LOWER:msedge.exe=edge%"
-set "BROWSER_LOWER=%BROWSER_LOWER:brave.exe=brave%"
-
-if not "x%BROWSER_LOWER:chrome=%"=="x%BROWSER_LOWER%" (
     set "BROWSER_NAME=chrome"
-) else if not "x%BROWSER_LOWER:edge=%"=="x%BROWSER_LOWER%" (
-    set "BROWSER_NAME=edge"
-) else if not "x%BROWSER_LOWER:brave=%"=="x%BROWSER_LOWER%" (
-    set "BROWSER_NAME=brave"
 ) else (
-    set "BROWSER_NAME=chrome"
+    set "BROWSER_LOWER=!BROWSER_CMD:\=/!"
+    set "BROWSER_LOWER=!BROWSER_LOWER:chrome.exe=chrome!"
+    set "BROWSER_LOWER=!BROWSER_LOWER:msedge.exe=edge!"
+    set "BROWSER_LOWER=!BROWSER_LOWER:brave.exe=brave!"
+
+    echo !BROWSER_LOWER! | find /i "chrome" > NUL
+    if !errorlevel!==0 (
+        set "BROWSER_NAME=chrome"
+    ) else (
+        echo !BROWSER_LOWER! | find /i "edge" > NUL
+        if !errorlevel!==0 (
+            set "BROWSER_NAME=edge"
+        ) else (
+            echo !BROWSER_LOWER! | find /i "brave" > NUL
+            if !errorlevel!==0 (
+                set "BROWSER_NAME=brave"
+            ) else (
+                set "BROWSER_NAME=chrome"
+            )
+        )
+    )
 )
 
 echo Default browser detected: %BROWSER_NAME%
@@ -49,26 +67,25 @@ echo.
 
 REM Download latest extension.zip
 echo Downloading latest extension package...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -Uri '%RELEASE_ZIP%' -OutFile '%ZIP_FILE%' -UseBasicParsing -MaximumRedirection 3 } catch { exit 1 }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -Uri '%RELEASE_ZIP%' -OutFile '%ZIP_FILE%' -UseBasicParsing -MaximumRedirection 3 } catch { Write-Error $_.Exception.Message; exit 1 }"
 
 if not exist "%ZIP_FILE%" (
     echo.
     echo ERROR: Could not download extension.zip.
     echo Please check your internet connection and try again.
-    pause
-    exit /b 1
+    goto :ErrorPause
 )
 
 REM Remove old extension folder and extract
 echo Extracting extension files...
 if exist "%EXT_DIR%" rmdir /S /Q "%EXT_DIR%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path '%ZIP_FILE%' -DestinationPath '%INSTALL_DIR%' -Force"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -Path '%ZIP_FILE%' -DestinationPath '%INSTALL_DIR%' -Force } catch { Write-Error $_.Exception.Message; exit 1 }"
 
 if not exist "%EXT_DIR%\manifest.json" (
     echo.
     echo ERROR: Extraction failed or manifest.json not found.
-    pause
-    exit /b 1
+    echo Expected folder: %EXT_DIR%
+    goto :ErrorPause
 )
 
 REM Install updater helper files
@@ -86,11 +103,7 @@ echo }
 ) > "%UPDATER_DIR%\config.json"
 
 REM Update native-host.json with absolute path
-powershell -NoProfile -ExecutionPolicy Bypass -Command "
-$json = Get-Content '%UPDATER_DIR%\native-host.json' | ConvertFrom-Json
-$json.path = '%UPDATER_DIR%\helper.cmd'.Replace('\', '\\')
-$json | ConvertTo-Json -Compress | Set-Content '%UPDATER_DIR%\native-host.json' -Encoding UTF8
-"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $json = Get-Content '%UPDATER_DIR%\native-host.json' | ConvertFrom-Json; $json.path = '%UPDATER_DIR%\helper.cmd'.Replace('\', '\\'); $json | ConvertTo-Json -Compress | Set-Content '%UPDATER_DIR%\native-host.json' -Encoding UTF8 } catch { exit 1 }"
 
 REM Register Native Messaging host for all browsers (HKCU only, no admin needed)
 echo Registering browser updater integration...
@@ -141,13 +154,23 @@ echo IMPORTANT: For the extension to persist after browser restart,
 echo you must load it unpacked:
 echo.
 echo   1. In the browser window that just opened, enable 
-echo      DEVELOPER MODE (toggle top-right).
+echo      DEVELOPER MODE ^(toggle top-right^).
 echo   2. Click LOAD UNPACKED.
-echo   3. Press Ctrl+V, then press Enter (path is already copied).
+echo   3. Press Ctrl+V, then press Enter ^(path is already copied^).
 echo   4. Click SELECT FOLDER.
 echo.
 echo After that, the extension will auto-update itself from the
-echo Help & Updates tab whenever a new version is released.
+echo Help ^& Updates tab whenever a new version is released.
 echo.
-echo Press any key to close this window...
+goto :DonePause
+
+:ErrorPause
+echo.
+echo ============================================================
+echo   Installation Failed
+echo ============================================================
+:DonePause
+echo.
+echo Press any key to close...
 pause > NUL
+endlocal
