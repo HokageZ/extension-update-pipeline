@@ -30,36 +30,53 @@ REM Create install directory
 if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 
 REM Detect default browser from registry
+REM Windows 10/11 stores the real default in UrlAssociations\http\UserChoice
 echo Detecting your default browser...
-set "BROWSER_CMD="
-for /f "tokens=2*" %%a in ('reg query "HKCR\http\shell\open\command" /ve 2^>nul ^| findstr /C:"REG_SZ"') do set "BROWSER_CMD=%%b"
+set "BROWSER_NAME="
+set "HTTP_PROGID="
 
-if not defined BROWSER_CMD (
-    echo Could not detect default browser. Falling back to Chrome.
-    set "BROWSER_CMD=chrome"
-    set "BROWSER_NAME=chrome"
-) else (
-    set "BROWSER_LOWER=!BROWSER_CMD:\=/!"
-    set "BROWSER_LOWER=!BROWSER_LOWER:chrome.exe=chrome!"
-    set "BROWSER_LOWER=!BROWSER_LOWER:msedge.exe=edge!"
-    set "BROWSER_LOWER=!BROWSER_LOWER:brave.exe=brave!"
+for /f "tokens=2*" %%a in ('reg query "HKCU\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice" /v ProgId 2^>nul ^| findstr /C:"REG_SZ"') do set "HTTP_PROGID=%%b"
 
-    echo !BROWSER_LOWER! | find /i "chrome" > NUL
-    if !errorlevel!==0 (
-        set "BROWSER_NAME=chrome"
-    ) else (
-        echo !BROWSER_LOWER! | find /i "edge" > NUL
-        if !errorlevel!==0 (
-            set "BROWSER_NAME=edge"
-        ) else (
+if defined HTTP_PROGID (
+    echo !HTTP_PROGID! | find /i "Chrome" > NUL
+    if !errorlevel!==0 set "BROWSER_NAME=chrome"
+
+    if not defined BROWSER_NAME (
+        echo !HTTP_PROGID! | find /i "MSEdge" > NUL
+        if !errorlevel!==0 set "BROWSER_NAME=edge"
+    )
+
+    if not defined BROWSER_NAME (
+        echo !HTTP_PROGID! | find /i "Brave" > NUL
+        if !errorlevel!==0 set "BROWSER_NAME=brave"
+    )
+)
+
+REM Fallback: read the open command from HKCR\http
+if not defined BROWSER_NAME (
+    set "BROWSER_CMD="
+    for /f "tokens=2*" %%a in ('reg query "HKCR\http\shell\open\command" /ve 2^>nul ^| findstr /C:"REG_SZ"') do set "BROWSER_CMD=%%b"
+
+    if defined BROWSER_CMD (
+        set "BROWSER_LOWER=!BROWSER_CMD:\=/!"
+        echo !BROWSER_LOWER! | find /i "chrome" > NUL
+        if !errorlevel!==0 set "BROWSER_NAME=chrome"
+
+        if not defined BROWSER_NAME (
+            echo !BROWSER_LOWER! | find /i "edge" > NUL
+            if !errorlevel!==0 set "BROWSER_NAME=edge"
+        )
+
+        if not defined BROWSER_NAME (
             echo !BROWSER_LOWER! | find /i "brave" > NUL
-            if !errorlevel!==0 (
-                set "BROWSER_NAME=brave"
-            ) else (
-                set "BROWSER_NAME=chrome"
-            )
+            if !errorlevel!==0 set "BROWSER_NAME=brave"
         )
     )
+)
+
+if not defined BROWSER_NAME (
+    echo Could not detect default browser. Falling back to Chrome.
+    set "BROWSER_NAME=chrome"
 )
 
 echo Default browser detected: %BROWSER_NAME%
