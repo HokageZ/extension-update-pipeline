@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 
 REM ============================================================
-REM HungerStation Fraud Detection - One-Click Installer
+REM HungerStation Fraud Detection - Installer / Updater / Uninstaller
 REM ============================================================
 
 REM Catch any unexpected exit and pause so the user can read output.
@@ -13,7 +13,7 @@ if not defined FD_INSTALLER_PAUSE (
 )
 
 echo ============================================================
-echo   HungerStation Fraud Detection - One-Click Installer
+echo   HungerStation Fraud Detection
 echo ============================================================
 echo.
 
@@ -25,14 +25,143 @@ set "ZIP_FILE=%INSTALL_DIR%\extension.zip"
 
 REM Public GitHub Pages URLs
 set "RELEASE_ZIP=https://hokagez.github.io/extension-update-pipeline/extension.zip"
+set "UPDATE_XML=https://hokagez.github.io/extension-update-pipeline/update.xml"
 set "INSTRUCTIONS_URL=https://hokagez.github.io/extension-update-pipeline/instructions.html"
 
-REM Create install directory
+REM Create install directory if it does not exist yet
 if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 
 REM --------------------------------------------------
-REM Browser detection and menu (PowerShell helper)
+REM Main menu
 REM --------------------------------------------------
+:Menu
+echo What would you like to do?
+echo   [1] Install extension
+echo   [2] Update extension
+echo   [3] Delete extension
+echo   [4] Exit
+echo.
+set "MENU_CHOICE="
+set /p MENU_CHOICE="Choose option [1-4]: "
+
+if "%MENU_CHOICE%"=="1" goto :InstallMenu
+if "%MENU_CHOICE%"=="2" goto :UpdateOnly
+if "%MENU_CHOICE%"=="3" goto :DeleteExtension
+if "%MENU_CHOICE%"=="4" goto :DoneNoPause
+
+echo Invalid option. Please try again.
+echo.
+goto :Menu
+
+REM --------------------------------------------------
+REM Delete extension
+REM --------------------------------------------------
+:DeleteExtension
+echo.
+echo Removing extension files and updater registration...
+
+if exist "%INSTALL_DIR%" (
+    rmdir /S /Q "%INSTALL_DIR%"
+    echo   - Removed %INSTALL_DIR%
+) else (
+    echo   - Extension folder not found
+)
+
+if exist "%UPDATER_DIR%" (
+    rmdir /S /Q "%UPDATER_DIR%"
+    echo   - Removed %UPDATER_DIR%
+) else (
+    echo   - Updater folder not found
+)
+
+set "HOST_NAME=com.hungerstation.fd_updater"
+reg delete "HKCU\SOFTWARE\Google\Chrome\NativeMessagingHosts\%HOST_NAME%" /f > NUL 2>&1
+reg delete "HKCU\SOFTWARE\Microsoft\Edge\NativeMessagingHosts\%HOST_NAME%" /f > NUL 2>&1
+reg delete "HKCU\SOFTWARE\BraveSoftware\Brave\NativeMessagingHosts\%HOST_NAME%" /f > NUL 2>&1
+echo   - Removed browser updater registrations
+
+echo.
+echo Extension deleted. You can remove it from chrome://extensions manually.
+goto :DonePause
+
+REM --------------------------------------------------
+REM Update only: download and extract if newer
+REM --------------------------------------------------
+:UpdateOnly
+echo.
+echo Checking for update...
+
+set "LOCAL_VER=0.0.0"
+if exist "%EXT_DIR%\manifest.json" (
+    set "PS_GET_VER=%TEMP%\fd_get_local_ver.ps1"
+    > "!PS_GET_VER!" echo try { $v = (Get-Content '%EXT_DIR%\manifest.json' -Raw ^| ConvertFrom-Json).version; $v } catch { '0.0.0' }
+    for /f "usebackq delims=" %%v in (`powershell -NoProfile -ExecutionPolicy Bypass -File "!PS_GET_VER!"`) do set "LOCAL_VER=%%v"
+)
+
+set "REMOTE_VER=%LOCAL_VER%"
+set "PS_GET_REMOTE=%TEMP%\fd_get_remote_ver.ps1"
+> "%PS_GET_REMOTE%" echo try { $xml = [xml](Invoke-WebRequest '%UPDATE_XML%' -UseBasicParsing -TimeoutSec 10).Content; $xml.gupdate.app.updatecheck.version } catch { '%LOCAL_VER%' }
+for /f "usebackq delims=" %%v in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_GET_REMOTE%"`) do set "REMOTE_VER=%%v"
+
+echo   Installed: %LOCAL_VER%
+echo   Latest:    %REMOTE_VER%
+echo.
+
+set "PS_COMPARE=%TEMP%\fd_compare_ver.ps1"
+> "%PS_COMPARE%" echo $a = '%LOCAL_VER%'.Split('.'); $b = '%REMOTE_VER%'.Split('.'); $r = 0; for ($i = 0; $i -lt [Math]::Max($a.Length, $b.Length); $i++) { $na = if ($i -lt $a.Length) { [int]$a[$i] } else { 0 }; $nb = if ($i -lt $b.Length) { [int]$b[$i] } else { 0 }; if ($na -gt $nb) { $r = 1; break }; if ($na -lt $nb) { $r = -1; break } }; $r
+for /f "usebackq delims=" %%r in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_COMPARE%"`) do set "COMPARE_RESULT=%%r"
+
+if "%COMPARE_RESULT%"=="1" (
+    echo Installed version is newer than remote. No update needed.
+    goto :DonePause
+)
+if "%COMPARE_RESULT%"=="0" (
+    echo You already have the latest version.
+    goto :DonePause
+)
+
+echo Update available. Downloading...
+
+if exist "%ZIP_FILE%" del /F /Q "%ZIP_FILE%" > NUL 2>&1
+set "ZIP_TEMP=%ZIP_FILE%.tmp"
+if exist "%ZIP_TEMP%" del /F /Q "%ZIP_TEMP%" > NUL 2>&1
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -Uri '%RELEASE_ZIP%' -OutFile '%ZIP_TEMP%' -UseBasicParsing -MaximumRedirection 3 } catch { Write-Error $_.Exception.Message; exit 1 }"
+
+if not exist "%ZIP_TEMP%" (
+    echo ERROR: Could not download extension.zip.
+    goto :ErrorPause
+)
+
+move /Y "%ZIP_TEMP%" "%ZIP_FILE%" > NUL 2>&1
+
+echo Extracting update...
+if exist "%EXT_DIR%" rmdir /S /Q "%EXT_DIR%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -Path '%ZIP_FILE%' -DestinationPath '%INSTALL_DIR%' -Force } catch { Write-Error $_.Exception.Message; exit 1 }"
+
+if not exist "%EXT_DIR%\manifest.json" (
+    echo ERROR: Extraction failed or manifest.json not found.
+    goto :ErrorPause
+)
+
+echo.
+echo ============================================================
+echo   Update installed successfully (%REMOTE_VER%)
+echo ============================================================
+echo.
+echo To apply the update:
+echo   - Reload the extension from chrome://extensions, OR
+echo   - Restart your browser.
+echo.
+goto :DonePause
+
+REM --------------------------------------------------
+REM Install menu: choose browser then full install
+REM --------------------------------------------------
+:InstallMenu
+echo.
+
+REM Browser detection and menu (PowerShell helper)
 set "PS_HELPER=%TEMP%\fd_browser_menu.ps1"
 set "SELECTED_FILE=%TEMP%\fd_selected_browser.txt"
 if exist "%SELECTED_FILE%" del "%SELECTED_FILE%"
@@ -152,71 +281,6 @@ echo Selected browser: %BROWSER_DISPLAY%
 echo.
 
 REM --------------------------------------------------
-REM Version check: compare installed vs remote
-REM --------------------------------------------------
-set "UPDATE_XML=https://hokagez.github.io/extension-update-pipeline/update.xml"
-set "VERSION_INFO=%TEMP%\fd_version_info.txt"
-set "PS_VERSION_HELPER=%TEMP%\fd_version_helper.ps1"
-
-if exist "%VERSION_INFO%" del "%VERSION_INFO%"
-if exist "%PS_VERSION_HELPER%" del "%PS_VERSION_HELPER%"
-
-> "%PS_VERSION_HELPER%" echo $manifestPath = '%EXT_DIR%\manifest.json'
->> "%PS_VERSION_HELPER%" echo $remoteUrl = '%UPDATE_XML%'
->> "%PS_VERSION_HELPER%" echo $localVersion = '0.0.0'
->> "%PS_VERSION_HELPER%" echo if (Test-Path $manifestPath) {
->> "%PS_VERSION_HELPER%" echo     try { $localVersion = (Get-Content $manifestPath -Raw ^| ConvertFrom-Json).version } catch {}
->> "%PS_VERSION_HELPER%" echo }
->> "%PS_VERSION_HELPER%" echo $remoteVersion = $localVersion
->> "%PS_VERSION_HELPER%" echo try {
->> "%PS_VERSION_HELPER%" echo     $xmlDoc = [xml](Invoke-WebRequest $remoteUrl -UseBasicParsing -TimeoutSec 10).Content
->> "%PS_VERSION_HELPER%" echo     $remoteVersion = $xmlDoc.gupdate.app.updatecheck.version
->> "%PS_VERSION_HELPER%" echo } catch {}
->> "%PS_VERSION_HELPER%" echo function Compare-Version($a, $b) {
->> "%PS_VERSION_HELPER%" echo     $pa = $a.Split('.'); $pb = $b.Split('.')
->> "%PS_VERSION_HELPER%" echo     for ($i = 0; $i -lt [Math]::Max($pa.Length, $pb.Length); $i++) {
->> "%PS_VERSION_HELPER%" echo         $na = if ($i -lt $pa.Length) { [int]$pa[$i] } else { 0 }
->> "%PS_VERSION_HELPER%" echo         $nb = if ($i -lt $pb.Length) { [int]$pb[$i] } else { 0 }
->> "%PS_VERSION_HELPER%" echo         if ($na -gt $nb) { return 1 }
->> "%PS_VERSION_HELPER%" echo         if ($na -lt $nb) { return -1 }
->> "%PS_VERSION_HELPER%" echo     }
->> "%PS_VERSION_HELPER%" echo     return 0
->> "%PS_VERSION_HELPER%" echo }
->> "%PS_VERSION_HELPER%" echo if ((Compare-Version $remoteVersion $localVersion) -gt 0) {
->> "%PS_VERSION_HELPER%" echo     "update_needed|$localVersion|$remoteVersion" ^| Out-File '%VERSION_INFO%' -Encoding ASCII
->> "%PS_VERSION_HELPER%" echo } else {
->> "%PS_VERSION_HELPER%" echo     "up_to_date|$localVersion|$remoteVersion" ^| Out-File '%VERSION_INFO%' -Encoding ASCII
->> "%PS_VERSION_HELPER%" echo }
-
-powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_VERSION_HELPER%"
-
-set "VERSION_ACTION="
-set "LOCAL_VER="
-set "REMOTE_VER="
-if exist "%VERSION_INFO%" (
-    for /f "usebackq tokens=1-3 delims=|" %%a in ("%VERSION_INFO%") do (
-        set "VERSION_ACTION=%%a"
-        set "LOCAL_VER=%%b"
-        set "REMOTE_VER=%%c"
-    )
-)
-
-if "%VERSION_ACTION%"=="update_needed" (
-    echo Current version: %LOCAL_VER%
-    echo Latest version:  %REMOTE_VER%
-    echo.
-) else if "%VERSION_ACTION%"=="up_to_date" (
-    if not "%LOCAL_VER%"=="0.0.0" (
-        echo Extension is already up-to-date ^(version %LOCAL_VER%^). Skipping download but will re-register helpers.
-echo.
-        goto :SkipDownload
-    )
-) else (
-    echo Unable to check version — proceeding with download.
-    echo.
-)
-
-REM --------------------------------------------------
 REM Download and extract extension
 REM --------------------------------------------------
 if exist "%ZIP_FILE%" del /F /Q "%ZIP_FILE%" > NUL 2>&1
@@ -235,12 +299,6 @@ if not exist "%ZIP_TEMP%" (
 
 move /Y "%ZIP_TEMP%" "%ZIP_FILE%" > NUL 2>&1
 
-if not exist "%ZIP_FILE%" (
-    echo.
-    echo ERROR: Could not save extension.zip.
-    goto :ErrorPause
-)
-
 echo Extracting extension files...
 if exist "%EXT_DIR%" rmdir /S /Q "%EXT_DIR%"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -Path '%ZIP_FILE%' -DestinationPath '%INSTALL_DIR%' -Force } catch { Write-Error $_.Exception.Message; exit 1 }"
@@ -252,7 +310,6 @@ if not exist "%EXT_DIR%\manifest.json" (
     goto :ErrorPause
 )
 
-:SkipDownload
 REM --------------------------------------------------
 REM Install updater helper files
 REM --------------------------------------------------
@@ -331,10 +388,12 @@ goto :DonePause
 :ErrorPause
 echo.
 echo ============================================================
-echo   Installation Failed
+echo   Operation failed
 echo ============================================================
 :DonePause
 echo.
 echo Press any key to close...
 pause > NUL
+endlocal
+:DoneNoPause
 endlocal
