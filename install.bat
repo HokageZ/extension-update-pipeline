@@ -152,6 +152,71 @@ echo Selected browser: %BROWSER_DISPLAY%
 echo.
 
 REM --------------------------------------------------
+REM Version check: compare installed vs remote
+REM --------------------------------------------------
+set "UPDATE_XML=https://hokagez.github.io/extension-update-pipeline/update.xml"
+set "VERSION_INFO=%TEMP%\fd_version_info.txt"
+set "PS_VERSION_HELPER=%TEMP%\fd_version_helper.ps1"
+
+if exist "%VERSION_INFO%" del "%VERSION_INFO%"
+if exist "%PS_VERSION_HELPER%" del "%PS_VERSION_HELPER%"
+
+> "%PS_VERSION_HELPER%" echo $manifestPath = '%EXT_DIR%\manifest.json'
+>> "%PS_VERSION_HELPER%" echo $remoteUrl = '%UPDATE_XML%'
+>> "%PS_VERSION_HELPER%" echo $localVersion = '0.0.0'
+>> "%PS_VERSION_HELPER%" echo if (Test-Path $manifestPath) {
+>> "%PS_VERSION_HELPER%" echo     try { $localVersion = (Get-Content $manifestPath -Raw ^| ConvertFrom-Json).version } catch {}
+>> "%PS_VERSION_HELPER%" echo }
+>> "%PS_VERSION_HELPER%" echo $remoteVersion = $localVersion
+>> "%PS_VERSION_HELPER%" echo try {
+>> "%PS_VERSION_HELPER%" echo     $xmlDoc = [xml](Invoke-WebRequest $remoteUrl -UseBasicParsing -TimeoutSec 10).Content
+>> "%PS_VERSION_HELPER%" echo     $remoteVersion = $xmlDoc.gupdate.app.updatecheck.version
+>> "%PS_VERSION_HELPER%" echo } catch {}
+>> "%PS_VERSION_HELPER%" echo function Compare-Version($a, $b) {
+>> "%PS_VERSION_HELPER%" echo     $pa = $a.Split('.'); $pb = $b.Split('.')
+>> "%PS_VERSION_HELPER%" echo     for ($i = 0; $i -lt [Math]::Max($pa.Length, $pb.Length); $i++) {
+>> "%PS_VERSION_HELPER%" echo         $na = if ($i -lt $pa.Length) { [int]$pa[$i] } else { 0 }
+>> "%PS_VERSION_HELPER%" echo         $nb = if ($i -lt $pb.Length) { [int]$pb[$i] } else { 0 }
+>> "%PS_VERSION_HELPER%" echo         if ($na -gt $nb) { return 1 }
+>> "%PS_VERSION_HELPER%" echo         if ($na -lt $nb) { return -1 }
+>> "%PS_VERSION_HELPER%" echo     }
+>> "%PS_VERSION_HELPER%" echo     return 0
+>> "%PS_VERSION_HELPER%" echo }
+>> "%PS_VERSION_HELPER%" echo if ((Compare-Version $remoteVersion $localVersion) -gt 0) {
+>> "%PS_VERSION_HELPER%" echo     "update_needed|$localVersion|$remoteVersion" ^| Out-File '%VERSION_INFO%' -Encoding ASCII
+>> "%PS_VERSION_HELPER%" echo } else {
+>> "%PS_VERSION_HELPER%" echo     "up_to_date|$localVersion|$remoteVersion" ^| Out-File '%VERSION_INFO%' -Encoding ASCII
+>> "%PS_VERSION_HELPER%" echo }
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_VERSION_HELPER%"
+
+set "VERSION_ACTION="
+set "LOCAL_VER="
+set "REMOTE_VER="
+if exist "%VERSION_INFO%" (
+    for /f "usebackq tokens=1-3 delims=|" %%a in ("%VERSION_INFO%") do (
+        set "VERSION_ACTION=%%a"
+        set "LOCAL_VER=%%b"
+        set "REMOTE_VER=%%c"
+    )
+)
+
+if "%VERSION_ACTION%"=="update_needed" (
+    echo Current version: %LOCAL_VER%
+    echo Latest version:  %REMOTE_VER%
+    echo.
+) else if "%VERSION_ACTION%"=="up_to_date" (
+    if not "%LOCAL_VER%"=="0.0.0" (
+        echo Extension is already up-to-date ^(version %LOCAL_VER%^). Skipping download but will re-register helpers.
+echo.
+        goto :SkipDownload
+    )
+) else (
+    echo Unable to check version — proceeding with download.
+    echo.
+)
+
+REM --------------------------------------------------
 REM Download and extract extension
 REM --------------------------------------------------
 if exist "%ZIP_FILE%" del /F /Q "%ZIP_FILE%" > NUL 2>&1
@@ -187,6 +252,7 @@ if not exist "%EXT_DIR%\manifest.json" (
     goto :ErrorPause
 )
 
+:SkipDownload
 REM --------------------------------------------------
 REM Install updater helper files
 REM --------------------------------------------------
