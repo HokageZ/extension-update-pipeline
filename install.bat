@@ -85,42 +85,11 @@ echo Extension deleted. You can remove it from chrome://extensions manually.
 goto :DonePause
 
 REM --------------------------------------------------
-REM Update only: download and extract if newer
+REM Update only: download and extract
 REM --------------------------------------------------
 :UpdateOnly
 echo.
-echo Checking for update...
-
-set "LOCAL_VER=0.0.0"
-if exist "%EXT_DIR%\manifest.json" (
-    set "PS_GET_VER=%TEMP%\fd_get_local_ver.ps1"
-    > "!PS_GET_VER!" echo try { $v = (Get-Content '%EXT_DIR%\manifest.json' -Raw ^| ConvertFrom-Json).version; $v } catch { '0.0.0' }
-    for /f "usebackq delims=" %%v in (`powershell -NoProfile -ExecutionPolicy Bypass -File "!PS_GET_VER!"`) do set "LOCAL_VER=%%v"
-)
-
-set "REMOTE_VER=%LOCAL_VER%"
-set "PS_GET_REMOTE=%TEMP%\fd_get_remote_ver.ps1"
-> "%PS_GET_REMOTE%" echo try { $xml = [xml](Invoke-WebRequest '%UPDATE_XML%' -UseBasicParsing -TimeoutSec 10).Content; $xml.gupdate.app.updatecheck.version } catch { '%LOCAL_VER%' }
-for /f "usebackq delims=" %%v in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_GET_REMOTE%"`) do set "REMOTE_VER=%%v"
-
-echo   Installed: %LOCAL_VER%
-echo   Latest:    %REMOTE_VER%
-echo.
-
-set "PS_COMPARE=%TEMP%\fd_compare_ver.ps1"
-> "%PS_COMPARE%" echo $a = '%LOCAL_VER%'.Split('.'); $b = '%REMOTE_VER%'.Split('.'); $r = 0; for ($i = 0; $i -lt [Math]::Max($a.Length, $b.Length); $i++) { $na = if ($i -lt $a.Length) { [int]$a[$i] } else { 0 }; $nb = if ($i -lt $b.Length) { [int]$b[$i] } else { 0 }; if ($na -gt $nb) { $r = 1; break }; if ($na -lt $nb) { $r = -1; break } }; $r
-for /f "usebackq delims=" %%r in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_COMPARE%"`) do set "COMPARE_RESULT=%%r"
-
-if "%COMPARE_RESULT%"=="1" (
-    echo Installed version is newer than remote. No update needed.
-    goto :DonePause
-)
-if "%COMPARE_RESULT%"=="0" (
-    echo You already have the latest version.
-    goto :DonePause
-)
-
-echo Update available. Downloading...
+echo Downloading latest extension package...
 
 if exist "%ZIP_FILE%" del /F /Q "%ZIP_FILE%" > NUL 2>&1
 set "ZIP_TEMP=%ZIP_FILE%.tmp"
@@ -135,7 +104,7 @@ if not exist "%ZIP_TEMP%" (
 
 move /Y "%ZIP_TEMP%" "%ZIP_FILE%" > NUL 2>&1
 
-echo Extracting update...
+echo Extracting extension files...
 if exist "%EXT_DIR%" rmdir /S /Q "%EXT_DIR%"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -Path '%ZIP_FILE%' -DestinationPath '%INSTALL_DIR%' -Force } catch { Write-Error $_.Exception.Message; exit 1 }"
 
@@ -144,9 +113,29 @@ if not exist "%EXT_DIR%\manifest.json" (
     goto :ErrorPause
 )
 
+echo Installing auto-update helper...
+if not exist "%UPDATER_DIR%" mkdir "%UPDATER_DIR%"
+copy /Y "%EXT_DIR%\updater\helper.cmd" "%UPDATER_DIR%\helper.cmd" > NUL 2>&1
+copy /Y "%EXT_DIR%\updater\helper.ps1" "%UPDATER_DIR%\helper.ps1" > NUL 2>&1
+copy /Y "%EXT_DIR%\updater\native-host.json" "%UPDATER_DIR%\native-host.json" > NUL 2>&1
+
+(
+echo {
+echo   "extensionPath": "%EXT_DIR:\=\\%"
+echo }
+) > "%UPDATER_DIR%\config.json"
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $json = Get-Content '%UPDATER_DIR%\native-host.json' | ConvertFrom-Json; $json.path = '%UPDATER_DIR%\helper.cmd'.Replace('\', '\\'); $json | ConvertTo-Json -Compress | Set-Content '%UPDATER_DIR%\native-host.json' -Encoding UTF8 } catch { exit 1 }"
+
+echo Registering browser updater integration...
+set "HOST_NAME=com.hungerstation.fd_updater"
+reg add "HKCU\SOFTWARE\Google\Chrome\NativeMessagingHosts\%HOST_NAME%" /ve /t REG_SZ /d "%UPDATER_DIR%\native-host.json" /f > NUL 2>&1
+reg add "HKCU\SOFTWARE\Microsoft\Edge\NativeMessagingHosts\%HOST_NAME%" /ve /t REG_SZ /d "%UPDATER_DIR%\native-host.json" /f > NUL 2>&1
+reg add "HKCU\SOFTWARE\BraveSoftware\Brave\NativeMessagingHosts\%HOST_NAME%" /ve /t REG_SZ /d "%UPDATER_DIR%\native-host.json" /f > NUL 2>&1
+
 echo.
 echo ============================================================
-echo   Update installed successfully (%REMOTE_VER%)
+echo   Update installed successfully!
 echo ============================================================
 echo.
 echo To apply the update:
@@ -356,9 +345,11 @@ echo   - Extensions page ^(enable Developer mode and Load unpacked here^)
 echo   - Instructions page
 echo.
 
-REM Launch with both URLs. --new-window reliably opens a fresh window even when
-REM the browser is already running. The extensions-internal URL must be first.
-start "" "%BROWSER_EXE%" --new-window "%EXT_URL%" "%INSTRUCTIONS_URL%"
+REM Launch each URL separately. Opening privileged (extensions) and unprivileged (web)
+REM URLs in a single command causes Chromium-based browsers to block the privileged page.
+start "" "%BROWSER_EXE%" --new-window "%EXT_URL%"
+ping -n 2 127.0.0.1 > NUL
+start "" "%BROWSER_EXE%" "%INSTRUCTIONS_URL%"
 
 REM Give the browser time to start before we show final text.
 ping -n 4 127.0.0.1 > NUL
