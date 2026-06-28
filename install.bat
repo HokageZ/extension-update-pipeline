@@ -58,7 +58,7 @@ REM Delete extension
 REM --------------------------------------------------
 :DeleteExtension
 echo.
-echo Removing extension files and updater registration...
+echo Removing extension files...
 
 if exist "%INSTALL_DIR%" (
     rmdir /S /Q "%INSTALL_DIR%"
@@ -73,12 +73,6 @@ if exist "%UPDATER_DIR%" (
 ) else (
     echo   - Updater folder not found
 )
-
-set "HOST_NAME=com.hungerstation.fd_updater"
-reg delete "HKCU\SOFTWARE\Google\Chrome\NativeMessagingHosts\%HOST_NAME%" /f > NUL 2>&1
-reg delete "HKCU\SOFTWARE\Microsoft\Edge\NativeMessagingHosts\%HOST_NAME%" /f > NUL 2>&1
-reg delete "HKCU\SOFTWARE\BraveSoftware\Brave\NativeMessagingHosts\%HOST_NAME%" /f > NUL 2>&1
-echo   - Removed browser updater registrations
 
 echo.
 echo Extension deleted. You can remove it from chrome://extensions manually.
@@ -112,26 +106,6 @@ if not exist "%EXT_DIR%\manifest.json" (
     echo ERROR: Extraction failed or manifest.json not found.
     goto :ErrorPause
 )
-
-echo Installing auto-update helper...
-if not exist "%UPDATER_DIR%" mkdir "%UPDATER_DIR%"
-copy /Y "%EXT_DIR%\updater\helper.cmd" "%UPDATER_DIR%\helper.cmd" > NUL 2>&1
-copy /Y "%EXT_DIR%\updater\helper.ps1" "%UPDATER_DIR%\helper.ps1" > NUL 2>&1
-copy /Y "%EXT_DIR%\updater\native-host.json" "%UPDATER_DIR%\native-host.json" > NUL 2>&1
-
-(
-echo {
-echo   "extensionPath": "%EXT_DIR:\=\\%"
-echo }
-) > "%UPDATER_DIR%\config.json"
-
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $json = Get-Content '%UPDATER_DIR%\native-host.json' | ConvertFrom-Json; $json.path = '%UPDATER_DIR%\helper.cmd'.Replace('\', '\\'); $json | ConvertTo-Json -Compress | Set-Content '%UPDATER_DIR%\native-host.json' -Encoding UTF8 } catch { exit 1 }"
-
-echo Registering browser updater integration...
-set "HOST_NAME=com.hungerstation.fd_updater"
-reg add "HKCU\SOFTWARE\Google\Chrome\NativeMessagingHosts\%HOST_NAME%" /ve /t REG_SZ /d "%UPDATER_DIR%\native-host.json" /f > NUL 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Edge\NativeMessagingHosts\%HOST_NAME%" /ve /t REG_SZ /d "%UPDATER_DIR%\native-host.json" /f > NUL 2>&1
-reg add "HKCU\SOFTWARE\BraveSoftware\Brave\NativeMessagingHosts\%HOST_NAME%" /ve /t REG_SZ /d "%UPDATER_DIR%\native-host.json" /f > NUL 2>&1
 
 echo.
 echo ============================================================
@@ -298,33 +272,6 @@ if not exist "%EXT_DIR%\manifest.json" (
     echo Expected folder: %EXT_DIR%
     goto :ErrorPause
 )
-
-REM --------------------------------------------------
-REM Install updater helper files
-REM --------------------------------------------------
-echo Installing auto-update helper...
-if not exist "%UPDATER_DIR%" mkdir "%UPDATER_DIR%"
-copy /Y "%EXT_DIR%\updater\helper.cmd" "%UPDATER_DIR%\helper.cmd" > NUL 2>&1
-copy /Y "%EXT_DIR%\updater\helper.ps1" "%UPDATER_DIR%\helper.ps1" > NUL 2>&1
-copy /Y "%EXT_DIR%\updater\native-host.json" "%UPDATER_DIR%\native-host.json" > NUL 2>&1
-
-(
-echo {
-echo   "extensionPath": "%EXT_DIR:\=\\%"
-echo }
-) > "%UPDATER_DIR%\config.json"
-
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $json = Get-Content '%UPDATER_DIR%\native-host.json' | ConvertFrom-Json; $json.path = '%UPDATER_DIR%\helper.cmd'.Replace('\', '\\'); $json | ConvertTo-Json -Compress | Set-Content '%UPDATER_DIR%\native-host.json' -Encoding UTF8 } catch { exit 1 }"
-
-REM --------------------------------------------------
-REM Register Native Messaging host for all browsers
-REM --------------------------------------------------
-echo Registering browser updater integration...
-set "HOST_NAME=com.hungerstation.fd_updater"
-
-reg add "HKCU\SOFTWARE\Google\Chrome\NativeMessagingHosts\%HOST_NAME%" /ve /t REG_SZ /d "%UPDATER_DIR%\native-host.json" /f > NUL 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Edge\NativeMessagingHosts\%HOST_NAME%" /ve /t REG_SZ /d "%UPDATER_DIR%\native-host.json" /f > NUL 2>&1
-reg add "HKCU\SOFTWARE\BraveSoftware\Brave\NativeMessagingHosts\%HOST_NAME%" /ve /t REG_SZ /d "%UPDATER_DIR%\native-host.json" /f > NUL 2>&1
 
 REM --------------------------------------------------
 REM Copy extension path to clipboard and open browser
